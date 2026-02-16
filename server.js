@@ -5,6 +5,12 @@ const mongoose = require("mongoose");
 const PORT = process.env.PORT || 3000;
 const bcrypt = require("bcrypt");
 app.use(express.json());
+
+
+
+
+const Prodect = require('./Moduls/Prodect')
+
 async function conctionDB() {
   try {
     await mongoose.connect(process.env.URL);
@@ -19,7 +25,7 @@ const User = require("./Moduls/User");
 
 app.post("/regist", async (req, res) => {
   try {
-    const { userName, email, passowerd } = req.body;
+    const { userName, email, passowerd, role } = req.body;
     if (!userName || !email || !passowerd) {
       return res.status(400).json({ msg: "data invalied" });
     }
@@ -34,6 +40,7 @@ app.post("/regist", async (req, res) => {
       userName,
       email,
       passowerd: hasepassowerd,
+      role
     });
 
     res.status(201).json({ msg: "create user", data: user });
@@ -62,6 +69,50 @@ app.post("/login", async (req, res) => {
     console.log(err);
   }
 });
+
+
+
+app.post("/prodct", async(rqs,res) =>{
+  try{const {prodctName,qunit,emailUser} = rqs.body
+   const user = await User.findOne({ emailUser })
+   if(user.role != "admin")  return res.status(400).json({ msg: "inveld Acsses" })
+    const prodect = await Prodect.create({
+      prodctName,
+      qunit
+    });
+    res.status(201).json({ msg: "creating prodect" });
+}
+catch(err){console.log(err)}
+})
+
+
+
+app.get("/prodct", async(rqs,res) =>{
+  try{
+    
+   const prodct = await Prodect.find()
+   
+    
+    res.status(200).json({ msg: "creating prodect" , data: prodct});
+}
+catch(err){console.log(err)}
+})
+app.get("/sarch", async(rqs,res) =>{
+  try{
+    const { prodctName } = rqs.query;
+
+//  const prodct = await Prodect.findOne({prodctName})
+    const prodct = await Prodect.find({ 
+      productName: { $regex: prodctName, $options: 'i' } 
+    });
+
+  
+   
+    
+    res.status(200).json({ msg: "sarcing prodect" , data: prodct});
+}
+catch(err){console.log(err)}
+})
 
 app.listen(PORT, () => {
   console.log("Server Rinng ", PORT);
